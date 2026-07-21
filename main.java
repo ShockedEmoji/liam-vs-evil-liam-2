@@ -34,32 +34,37 @@ public class main implements ActionListener
     // This does mean that the program would theoretically run at a faster speed on some computers
     float fps = 120;
 
-
+    // player starting positions; board is 13x13, so positions are 0-12
     private int playerStartX = 0;
     private int playerStartY = 0;
 
+    // current player position, used for collision detection and the point to smoothly move the player image to
     private int playerX = 0;
     private int playerY = 1;
 
+    // smoothly moves towards playerX and playerY, used for drawing the player image
     private float playerXSmooth = 0;
     private float playerYSmooth = 1;
 
     private float playerSpeed = 0.5f;
 
+    // canMove is disabled when the player is moving, so the player can't move again until they've hit a wall
     private boolean canMove = true;
+    // finalWon is true when the player has completed all levels, and the final win screen is displayed
     private boolean finalWon = false;
 
+    // fileLoadedYet is false until the player has loaded a level file, during which the 'load file' image is displayed
     private boolean fileLoadedYet = false;
 
+    // the state of the black screen that appears during the transition between levels
     private BlackScreenState blackScreenState = BlackScreenState.OFF;
 
     ArrayList<int[][]> levelData = new ArrayList<int[][]>(); // Big array containing all the wall placement information
     // Stored arrays are in the order data for wallsOne, data for wallsTwo, data for wallsOne etc
-    // Also contains two integers at the start for the player position
 
     ArrayList<int[]> playerData = new ArrayList<int[]>(); // Similar to above array, but stores player start position
 
-    // level for testing. Will make level be inputted as string before playing later.
+    // contain the current level's wall / win position data (is overwritten when a new level is loaded)
     int[][] wallsOne = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -92,16 +97,17 @@ public class main implements ActionListener
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     };
 
-    // current walls are visible, collidable ones
-    // alt and current flip when space key pressed
+    // currentWalls are the visible collidable ones
+    // altWalls and currentWalls flip when space key pressed
     private int[][] currentWalls = wallsOne;
     private int[][] altWalls = wallsTwo;
 
     private int currentLevel = 0;
 
+    // whether the alternate wall images should be used
     private boolean altImages = false;
 
-
+    // ImageIcon variables
     private ImageIcon playerImage;
     private ImageIcon wallActiveImageOne;
     private ImageIcon wallInactiveImageOne;
@@ -129,6 +135,7 @@ public class main implements ActionListener
         frame.getContentPane().setPreferredSize(new Dimension(WINDOW_WIDTH, WINDOW_HEIGHT));
         frame.pack();
 
+        // menu bar (is invisible due to game being drawn over the top)
         CreateMenuBar(frame);
 
         frame.setVisible(true);
@@ -138,13 +145,17 @@ public class main implements ActionListener
         frame.createBufferStrategy(2);
         frame.requestFocus();
 
+        // adds a keyboard listener to the frame
         frame.addKeyListener(new TAdapter());
 
+        // initializes the imageIcon variables
         LoadImages();
 
         ResetPlayerPosition();
 
-        // fileLoadedYet = true;
+        /* All of this stuff is for testing without having to load a file
+        fileLoadedYet = true;
+
         PrepareLevel("2,9,11111110011111111111100111110000000001111000000000111111111100111111111100111111111111111111111111111111110000000201111000000000111100000002011110000000001111111111111111111111001111111111110011111000000000111100000000011111111110011111111110011111111111111111111111111111111000000020111100000000011110000000201111000000000111111111111111-12,12,11111111111011101111111101000011111100011011111111011111111111111111110000001111111000000111111100110020111110011000011011001111111000100111111110110000000011011000000001111111111101110111111110100001111110001101111111101111111111111111111000000111111100000011111110011002011111001100001101100111111100010011111111011000000001101100000000-8,12,00100100011110110010101111101011000100100101101011111111111111111001001120201101101110000110110011111111011011100001100100110000111111111000011111111111111111111110000110010010001111011001010111110101100010010010110101111111111111111100100112020110110111000011011001100001101101110000110010011111111111111100001111111110000111111111000011-1,11,00000000000000000020000000000000000000000110000011001111111111111110000000001111000010000111110011100111111001110011100000000000000000000000000000000000000000000000000000110000000110000000200000000000000000000000011100000111100000111111111000111111111100011111111111111111111111111111110000001000000000100100100000010010010000001000001000-0,12,00000000000000000000000000000000000000000000000000000000000000000000000010000000000001000000000000000000000000001110000111100100000000000010000000000000000000010000000000000000010000020000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000111110011010011111000000001111100000000111110000000011111");
 
         LoadPlayerData(0);
@@ -152,6 +163,8 @@ public class main implements ActionListener
         playerYSmooth = playerStartY;
         LoadLevel(0);
 
+        // testing stuff ends here
+        */
         Update(frame);
 
         // timer which calls 'Update' fps times per second
@@ -159,24 +172,34 @@ public class main implements ActionListener
 
         updateTimer.start();
     }
+    /*
 
-    private String images_folder = "images";
+    I think its very good! I think the levels are well-designed, and the mechanics are simple but fun, and I think it benefits from a lack of traditional tutorial.
+    I do think it would be worth adding a few obstacles to the starting menu area (even if its just one block to get out of the way of) so the player understands the
+    movement mechanics, and adding an indicator for blocks that will remain no matter which 'polarity' Liam is at. Otherwise, great I love it
 
+
+    */
+
+    private String imagesFolder = "images";
+
+    // instantiates all of the imageIcon variables
     private void LoadImages() {
-        playerImage = new ImageIcon(images_folder + "/player.png");
-        wallActiveImageOne = new ImageIcon(images_folder + "/wall_active_1.png");
-        wallInactiveImageOne = new ImageIcon(images_folder + "/wall_inactive_1.png");
-        wallActiveImageTwo = new ImageIcon(images_folder + "/wall_active_2.png");
-        wallInactiveImageTwo = new ImageIcon(images_folder + "/wall_inactive_2.png");
-        backgroundImageOne = new ImageIcon(images_folder + "/background_1.png");
-        backgroundImageTwo = new ImageIcon(images_folder + "/background_2.png");
-        winActiveImage = new ImageIcon(images_folder + "/win_active_1.png");
-        winInactiveImage = new ImageIcon(images_folder + "/win_inactive_1.png");
-        finalWinImage = new ImageIcon(images_folder + "/final_win.png");
-        fileButton = new ImageIcon(images_folder + "/file_button.png");
-        loadFileInfoImage = new ImageIcon(images_folder + "/load_file.png");
+        playerImage = new ImageIcon(imagesFolder + "/player.png");
+        wallActiveImageOne = new ImageIcon(imagesFolder + "/wall_active_1.png");
+        wallInactiveImageOne = new ImageIcon(imagesFolder + "/wall_inactive_1.png");
+        wallActiveImageTwo = new ImageIcon(imagesFolder + "/wall_active_2.png");
+        wallInactiveImageTwo = new ImageIcon(imagesFolder + "/wall_inactive_2.png");
+        backgroundImageOne = new ImageIcon(imagesFolder + "/background_1.png");
+        backgroundImageTwo = new ImageIcon(imagesFolder + "/background_2.png");
+        winActiveImage = new ImageIcon(imagesFolder + "/win_active_1.png");
+        winInactiveImage = new ImageIcon(imagesFolder + "/win_inactive_1.png");
+        finalWinImage = new ImageIcon(imagesFolder + "/final_win.png");
+        fileButton = new ImageIcon(imagesFolder + "/file_button.png");
+        loadFileInfoImage = new ImageIcon(imagesFolder + "/load_file.png");
     }
 
+    // this function creates a menu bar, and adds it to 'frame'
     private void CreateMenuBar(JFrame frame) {
         JMenuBar menuBar;
         JMenu menu;
@@ -186,7 +209,7 @@ public class main implements ActionListener
 
         menuBar = new JMenuBar();
         frame.setJMenuBar(menuBar);
-        menu = new JMenu("GAAHHHHH");
+        menu = new JMenu("GAAHHHHH"); // GAAHHHHH is roughly the length of the file button
         menu.getPopupMenu().setLightWeightPopupEnabled(false);
         menuBar.add(menu);
 
@@ -197,6 +220,7 @@ public class main implements ActionListener
         }
     }
 
+    // function triggered when menu bar interacted with (file button pressed)
     public void actionPerformed(ActionEvent e) {
         String cmd = e.getActionCommand();
 
@@ -215,10 +239,10 @@ public class main implements ActionListener
                     fileLoadedYet = true;
                 }
                 break;
-            case "Close game": // makes window really tiny
+            case "Close game":
                 System.exit(0);
                 break;
-            case "Restart computer":
+            case "Restart computer": // this one was just added for fun, only works on windows
                 try {
                     Runtime runtime = Runtime.getRuntime();
                     runtime.exec("shutdown /r /t 0");
@@ -229,6 +253,7 @@ public class main implements ActionListener
         }
     }
 
+    // to be called when player dies / progresses to the next level
     private void ResetPlayerPosition() {
         playerX = playerStartX;
         playerY = playerStartY;
@@ -236,6 +261,7 @@ public class main implements ActionListener
         playerYSmooth = playerStartY;
     }
 
+    // this is so that you can't win one level, then immediately touch the newly loaded win position on the next level
     boolean winningFrozen = false;
 
     // runs every frame, the input 'frame' variable is the window
@@ -249,12 +275,14 @@ public class main implements ActionListener
 
         Graphics g = bufferStrategy.getDrawGraphics();
 
-        g.translate(8, PAINT_Y_OFFSET);
+        g.translate(8, PAINT_Y_OFFSET); // account for title bar
 
         clearGraphics(g);
 
         drawElements(g); // draws walls and win Liams, and black screen
 
+        // if you haven't won the level yet, you can move
+        // this canMove = true will be overidden to false further in the function if the 'player image' is still moving
         if (!winningFrozen) {
             canMove = true;
         }
@@ -275,10 +303,12 @@ public class main implements ActionListener
             // check if the player has won
             for (int tileY = 0; tileY < currentWalls.length; tileY++) {
                 for (int tileX = 0; tileX < currentWalls.length; tileX++) {
+                    // checks top left tile of win positions
                     if (currentWalls[tileY][tileX] == 2 && Math.abs(playerXSmooth - tileX) < 0.5 && Math.abs(playerYSmooth - tileY) < 0.5) {
                         System.out.println("RAAAHHHH WIN WIN WIN");
                         LoadNextLevel();
                     } else if (playerXSmooth >= 1 && playerYSmooth >= 1 && tileX > 0 && tileY > 0 ) {
+                        // checks bottom right tile of win positions
                         if (currentWalls[tileY - 1][tileX - 1] == 2 && Math.abs(playerXSmooth - tileX) < 0.5 && Math.abs(playerYSmooth - tileY) < 0.5) {
                             System.out.println("RAAAHHHH WIN WIN WIN");
                             LoadNextLevel();
@@ -288,6 +318,7 @@ public class main implements ActionListener
             }
         }
 
+        // if the black screen is on and the player is in their new starting position, set blackScreenState to FADEOUT
         if (blackScreenState == BlackScreenState.ON){
             if (playerXSmooth == playerStartX && playerYSmooth == playerStartY) {
                 LoadPlayerData(currentLevel + 1);
@@ -301,8 +332,10 @@ public class main implements ActionListener
 
         drawPlayer(g);
 
+        // if no files have been loaded yet, draw a big 'load a file please' image over everything
         if (!fileLoadedYet) {
             g.drawImage(loadFileInfoImage.getImage(), 0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, null);
+        // ditto with if you have won the entire level pack you downloaded
         } else if (finalWon) {
             g.drawImage(finalWinImage.getImage(), 0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, null);
         }
@@ -324,11 +357,11 @@ public class main implements ActionListener
 
     private void drawElements(Graphics g) {
         
+        // inactive elements are the walls and win positions that are not currently collidable, active elements are the ones that are
         drawInactiveElements(g);
         drawActiveElements(g);  
 
         // black screen
-
         switch (blackScreenState) {
             case ON:
                 blackScreenOpacity = 255;
@@ -357,6 +390,7 @@ public class main implements ActionListener
         Color black = new Color(0, 0, 0, blackScreenOpacity);
         g.setColor(black);
 
+        // draws the black screen over everything else, with the opacity set by the blackScreenState
         g.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
     }
 
@@ -367,6 +401,7 @@ public class main implements ActionListener
             wallImg = wallInactiveImageOne;
         }
 
+        // draws each tile of the inactive walls and win positions, with the correct image depending on which wall set is currently active
         for (int y = 0; y < altWalls.length; y++) {
             for (int x = 0; x < altWalls[y].length; x++) {
                 // walls
@@ -387,20 +422,21 @@ public class main implements ActionListener
             wallImg = wallActiveImageTwo;
         }
 
+        // draws each tile of the active walls and win positions, with the correct image depending on which wall set is currently active
         for (int y = 0; y < currentWalls.length; y++) {
             for (int x = 0; x < currentWalls[y].length; x++) {
                 // walls
                 if (currentWalls[y][x] == 1) {
                     g.drawImage(wallImg.getImage(), TILE_SIZE + x * TILE_SIZE, TILE_SIZE + y * TILE_SIZE + 0, TILE_SIZE, TILE_SIZE, null);
                 }
-                // wins
+                // win positions
                 else if (currentWalls[y][x] == 2) {
                     g.drawImage(winActiveImage.getImage(), TILE_SIZE + (int)(x * TILE_SIZE), TILE_SIZE + (int)(y * TILE_SIZE), TILE_SIZE * 2, TILE_SIZE * 2, null);
                 }
             }
         }
 
-        // places the boxes on the edges
+        // draws the boxes on the edges
         for (int i = 0; i < currentWalls.length + 2; i++) {
             for (int j = 0; j < currentWalls.length + 2; j++) {
                 if (i == 0 || j == 0 || i == currentWalls.length + 1 || j == currentWalls.length + 1) {
@@ -411,6 +447,7 @@ public class main implements ActionListener
     }
 
     // swaps between wall set one and two
+    // triggered on space key press
     private void swapWalls() {
         if (currentWalls == wallsOne) {
             currentWalls = wallsTwo;
@@ -447,11 +484,13 @@ public class main implements ActionListener
         System.out.println(playerX + "  " + playerY);
     }
 
+    // converts the string of level data into the arrays that store the wall and win position information, as well as the player starting position
     private void PrepareLevel(String input) {
         // player starting X
         int startX = 0;
 
         int i = 0;
+        // converts the first number in the string into an integer, and stores it as the player starting X position
         while(input.charAt(i) != ',') {
             int currentNumber = input.charAt(i) - '0';
             
@@ -466,6 +505,7 @@ public class main implements ActionListener
         int startY = 0;
 
         i = 0;
+        // converts the second number in the string into an integer, and stores it as the player starting Y position
         while(input.charAt(i) != ',') {
             int currentNumber = input.charAt(i) - '0';
             
@@ -473,7 +513,7 @@ public class main implements ActionListener
             startY += currentNumber;
             i++;
         }
-
+        // cuts off the starting position sections of the input string
         input = input.substring(i + 1);
 
 
@@ -482,15 +522,16 @@ public class main implements ActionListener
         playerStartPos[1] = startY;
         playerData.add(playerStartPos);
 
-
+        // create new level array and fill it with 0's
         int[][] level = new int[13][13];
         for (int[] row : level) {
             Arrays.fill(row, 0);
         }
         
+        // loops through the next 13*13*2 characters of the input string, and converts them into integers to fill the level array
         for (i = 0; i < input.length() && i < (13 * 13 * 2); i++) {
 
-            int currentNumber = input.charAt(i) - '0';
+            int currentNumber = input.charAt(i) - '0'; // - '0' converts the character into an integer
 
             if (currentNumber >= 0 && currentNumber <= 2) {
                 level[i % (13 * 13) / 13][i % 13] = currentNumber;
@@ -498,6 +539,7 @@ public class main implements ActionListener
                 level[i % (13 * 13) / 13][i % 13] = 0;
             }
 
+            // if the first 13*13 characters have been processed, add the level to the levelData array and reset the level array for the next set of 13*13 characters
             if (i == 13 * 13 - 1) {
                 levelData.add(level);
                 System.out.println("level added");
@@ -507,6 +549,7 @@ public class main implements ActionListener
                 }
             }
 
+            // if 13*13*2 characters have been processed, add the level to the levelData array and check for any further '-' (meaning there are more levels in the file / string)
             if (i == 13 * 13 * 2 - 1) {
                 levelData.add(level);
                 i = input.length();
@@ -518,6 +561,7 @@ public class main implements ActionListener
         }
     }
 
+    // loads the next level if it exists, otherwise shows the final win screen
     private void LoadNextLevel(){
         winningFrozen = true;
 
@@ -529,6 +573,7 @@ public class main implements ActionListener
         }
     }
 
+    // sets the playerStartX and playerStartY variables to their correct values, based on the inputted level number
     private void LoadPlayerData(int levelNum){
         if (levelData.size() / 2 > levelNum) {
 
@@ -542,6 +587,7 @@ public class main implements ActionListener
         }
     }
 
+    // sets the currentWalls and altWalls variables to their correct values, based on the inputted level number
     private void LoadLevel(int levelNum){
         System.out.println("level data size is " + levelData.size());
         if (levelData.size() / 2 > levelNum) {
@@ -570,6 +616,7 @@ public class main implements ActionListener
         blackScreenState = BlackScreenState.OFF;
     }
 
+    // opens a file explorer panel, and returns the contents of the selected file as a string
     private String LoadFile(){
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
@@ -658,7 +705,10 @@ public class main implements ActionListener
 /*
 
 
-BASIC ARROW LEVEL FOR TOUMA 'DUMB' HOSHINO
+PLACE WHERE I CREATE THE LEVELS, AND THEN PUT THEM IN A FILE, SO I CAN LOAD THEM IN LATER
+
+
+BASIC ARROW LEVEL
 
 2,9
 
